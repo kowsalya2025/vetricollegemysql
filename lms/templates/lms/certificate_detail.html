@@ -1,0 +1,388 @@
+{% extends 'lms/base.html' %}
+{% load static %}
+
+{% block title %}Certificate - {{ certificate.course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .certificate-container {
+        max-width: 900px;
+        margin: 3rem auto;
+        padding: 2rem;
+    }
+
+    .certificate {
+        background: white;
+        border: 15px solid #fbbf24;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .certificate::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(251, 191, 36, 0.05) 10px,
+            rgba(251, 191, 36, 0.05) 20px
+        );
+        pointer-events: none;
+    }
+
+    .certificate-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .certificate-badge {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        box-shadow: 0 5px 20px rgba(251, 191, 36, 0.3);
+    }
+
+    .certificate-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .certificate-subtitle {
+        font-size: 1.2rem;
+        color: #666;
+        font-style: italic;
+    }
+
+    .certificate-body {
+        text-align: center;
+        margin: 3rem 0;
+        position: relative;
+    }
+
+    .awarded-to {
+        font-size: 1rem;
+        color: #666;
+        margin-bottom: 1rem;
+    }
+
+    .recipient-name {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #22c55e;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #fbbf24;
+    }
+
+    .course-info {
+        font-size: 1.2rem;
+        color: #333;
+        line-height: 1.8;
+        margin-bottom: 2rem;
+    }
+
+    .course-name {
+        font-weight: bold;
+        color: #667eea;
+        font-size: 1.5rem;
+    }
+
+    .certificate-footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid #e5e7eb;
+        position: relative;
+    }
+
+    .signature-block {
+        text-align: center;
+        flex: 1;
+    }
+
+    .signature-line {
+        border-top: 2px solid #333;
+        margin-bottom: 0.5rem;
+        width: 200px;
+        margin: 0 auto 0.5rem;
+    }
+
+    .signature-label {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .certificate-meta {
+        text-align: center;
+        margin-top: 2rem;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+
+    .meta-item {
+        display: inline-block;
+        margin: 0 1.5rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .actions {
+        text-align: center;
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-download,
+    .btn-share,
+    .btn-back {
+        color: white;
+        padding: 1rem 2.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-download {
+        background: #22c55e;
+    }
+
+    .btn-download:hover {
+        background: #16a34a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-share {
+        background: #3b82f6;
+    }
+
+    .btn-share:hover {
+        background: #2563eb;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-back {
+        background: #6b7280;
+    }
+
+    .btn-back:hover {
+        background: #4b5563;
+        transform: translateY(-2px);
+    }
+
+    /* Loading spinner for download */
+    .btn-download.loading {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .btn-download.loading::after {
+        content: '';
+        width: 16px;
+        height: 16px;
+        border: 2px solid #fff;
+        border-top-color: transparent;
+        border-radius: 50%;
+        display: inline-block;
+        animation: spin 0.6s linear infinite;
+        margin-left: 0.5rem;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media print {
+        .actions {
+            display: none;
+        }
+        
+        body {
+            background: white;
+        }
+        
+        .certificate-container {
+            margin: 0;
+            padding: 0;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .certificate {
+            padding: 2rem 1rem;
+        }
+        
+        .certificate-title {
+            font-size: 1.8rem;
+        }
+        
+        .recipient-name {
+            font-size: 1.8rem;
+        }
+        
+        .certificate-footer {
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        .actions {
+            flex-direction: column;
+        }
+        
+        .btn-download,
+        .btn-share,
+        .btn-back {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .meta-item {
+            display: block;
+            margin: 0.5rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="certificate-container">
+    <div class="certificate">
+        <div class="certificate-header">
+            <div class="certificate-badge">🏆</div>
+            <h1 class="certificate-title">Certificate of Completion</h1>
+            <p class="certificate-subtitle">This is to certify that</p>
+        </div>
+
+        <div class="certificate-body">
+            <div class="recipient-name">
+                {{ certificate.user.get_full_name|default:certificate.user.email }}
+            </div>
+            
+            <div class="course-info">
+                has successfully completed the course
+                <br>
+                <span class="course-name">{{ certificate.course.title }}</span>
+                <br>
+                and has demonstrated proficiency in the subject matter
+            </div>
+        </div>
+
+        <div class="certificate-footer">
+            <div class="signature-block">
+                <div class="signature-line"></div>
+                <p class="signature-label">Instructor Signature</p>
+            </div>
+            
+            <div class="signature-block">
+                <div class="signature-line"></div>
+                <p class="signature-label">Director Signature</p>
+            </div>
+        </div>
+
+        <div class="certificate-meta">
+            <span class="meta-item">
+                <strong>Certificate ID:</strong> {{ certificate.certificate_id }}
+            </span>
+            <span class="meta-item">
+                <strong>Issue Date:</strong> {{ certificate.issue_date|date:"F d, Y" }}
+            </span>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'download_certificate' certificate.certificate_id %}" 
+           class="btn-download" 
+           id="downloadBtn">
+            <i class="fas fa-download"></i> 
+            <span>Download PDF</span>
+        </a>
+        
+        <button class="btn-share" onclick="shareCertificate()">
+            <i class="fas fa-share-alt"></i> 
+            <span>Share</span>
+        </button>
+        
+        <a href="{% url 'my_achievements' %}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> 
+            <span>Back to Achievements</span>
+        </a>
+    </div>
+</div>
+
+<script>
+    // Add loading state to download button
+    document.getElementById('downloadBtn').addEventListener('click', function(e) {
+        this.classList.add('loading');
+        this.querySelector('span').textContent = 'Generating PDF...';
+        
+        // Remove loading state after download starts (3 seconds)
+        setTimeout(() => {
+            this.classList.remove('loading');
+            this.querySelector('span').textContent = 'Download PDF';
+        }, 3000);
+    });
+
+    // Share certificate function
+    function shareCertificate() {
+        const certificateUrl = window.location.href;
+        const certificateTitle = "{{ certificate.course.title }}";
+        const shareText = `I've completed ${certificateTitle} and earned a certificate!`;
+        
+        // Check if Web Share API is supported
+        if (navigator.share) {
+            navigator.share({
+                title: 'Certificate of Completion',
+                text: shareText,
+                url: certificateUrl
+            }).catch(err => {
+                if (err.name !== 'AbortError') {
+                    fallbackShare(certificateUrl);
+                }
+            });
+        } else {
+            fallbackShare(certificateUrl);
+        }
+    }
+    
+    // Fallback share method (copy to clipboard)
+    function fallbackShare(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Certificate link copied to clipboard!');
+        }).catch(() => {
+            // If clipboard API fails, show prompt
+            prompt('Copy this link:', url);
+        });
+    }
+</script>
+{% endblock %}

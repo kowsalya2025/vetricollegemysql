@@ -1,0 +1,477 @@
+{% extends 'lms/base.html' %}
+{% load static %}
+
+{% block title %}Quiz Results - {{ quiz.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-container {
+        max-width: 900px;
+        margin: 3rem auto;
+        padding: 2rem;
+    }
+
+    .result-header {
+        background: {% if attempt.passed %}linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%){% else %}linear-gradient(135deg, #6366f1 0%, #4f46e5 100%){% endif %};
+        color: white;
+        padding: 3rem 2rem;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .result-icon {
+        font-size: 5rem;
+        margin-bottom: 1rem;
+    }
+
+    .result-title {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .result-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    .score-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .score-display {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .score-number {
+        font-size: 5rem;
+        font-weight: bold;
+        color: {% if attempt.passed %}#0ea5e9{% else %}#6366f1{% endif %};
+        margin-bottom: 0.5rem;
+    }
+
+    .score-label {
+        font-size: 1.2rem;
+        color: #64748b;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #1e293b;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .results-section {
+        background: linear-gradient(to bottom, #f8fafc 0%, #ffffff 100%);
+        border-radius: 16px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .results-section h2 {
+        color: #1e293b;
+        font-weight: 700;
+        font-size: 1.75rem;
+        border-bottom: 3px solid #6366f1;
+        padding-bottom: 1rem;
+        display: inline-block;
+    }
+
+    .question-result {
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border-radius: 12px;
+        border: 2px solid;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .question-result::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: linear-gradient(to bottom, transparent 0%, currentColor 50%, transparent 100%);
+    }
+
+    .question-result:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    }
+
+    .question-result.correct {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-color: #22c55e;
+        color: #22c55e;
+    }
+
+    .question-result.incorrect {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border-color: #f87171;
+        color: #f87171;
+    }
+
+    .question-result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid rgba(0,0,0,0.05);
+    }
+
+    .question-number-badge {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #1e293b;
+        background: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .result-icon-small {
+        font-size: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .question-result.correct .result-icon-small {
+        color: #22c55e;
+    }
+
+    .question-result.incorrect .result-icon-small {
+        color: #f87171;
+    }
+
+    .question-text-result {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    .answer-review {
+        margin: 1rem 0;
+        padding: 1.25rem;
+        border-radius: 10px;
+        border: 2px solid;
+        position: relative;
+        padding-left: 3rem;
+    }
+
+    .answer-review::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .answer-review.your-answer {
+        background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+        border-color: #a855f7;
+        color: #7c3aed;
+    }
+
+    .answer-review.correct-answer {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-color: #22c55e;
+        color: #16a34a;
+    }
+
+    .answer-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        color: currentColor;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .answer-label::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: currentColor;
+        opacity: 0.2;
+    }
+
+    .answer-review div:last-child {
+        color: #1e293b;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+
+    .explanation-box {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border: 2px solid #fbbf24;
+        border-left: 6px solid #f59e0b;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(251, 191, 36, 0.15);
+    }
+
+    .explanation-box strong {
+        color: #92400e;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .explanation-box::before {
+        content: '💡';
+        font-size: 1.5rem;
+        position: absolute;
+        margin-top: -0.25rem;
+    }
+
+    .certificate-banner {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3);
+    }
+
+    .certificate-banner h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .btn-certificate {
+        background: white;
+        color: #0891b2;
+        padding: 1rem 2.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-block;
+        font-weight: 600;
+        margin: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-certificate:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .actions {
+        text-align: center;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 1rem 2.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-block;
+        margin: 0.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: #6366f1;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #4f46e5;
+    }
+
+    .btn-secondary {
+        background: #64748b;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #475569;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="result-container">
+    <div class="result-header">
+        <div class="result-icon">
+            {% if attempt.passed %}🎉{% else %}😔{% endif %}
+        </div>
+        <h1 class="result-title">
+            {% if attempt.passed %}Congratulations!{% else %}Keep Trying!{% endif %}
+        </h1>
+        <p class="result-subtitle">
+            {% if attempt.passed %}
+                You've passed the quiz!
+            {% else %}
+                You didn't pass this time, but don't give up!
+            {% endif %}
+        </p>
+    </div>
+
+    {% if certificate %}
+    <div class="certificate-banner">
+        <h2>🏆 You've Earned a Certificate!</h2>
+        <p style="margin-bottom: 1.5rem;">
+            Congratulations! You've completed all course requirements and earned your certificate.
+        </p>
+        <a href="{% url 'certificate_detail' certificate.certificate_id %}" class="btn-certificate">
+            View Certificate
+        </a>
+        <a href="{% url 'download_certificate' certificate.certificate_id %}" class="btn-certificate">
+            Download Certificate
+        </a>
+    </div>
+    {% endif %}
+
+    <div class="score-card">
+        <div class="score-display">
+            <div class="score-number">{{ attempt.score|floatformat:0 }}%</div>
+            <div class="score-label">Your Score</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">{{ total_questions }}</div>
+                <div class="stat-label">Total Questions</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: #0ea5e9;">
+                    {{ correct_count }}
+                </div>
+                <div class="stat-label">Correct Answers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" style="color: #f97316;">
+                    {{ incorrect_count }}
+                </div>
+                <div class="stat-label">Wrong Answers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ quiz.passing_score }}%</div>
+                <div class="stat-label">Passing Score</div>
+            </div>
+        </div>
+    </div>
+
+    {% if quiz.show_correct_answers %}
+    <div class="results-section">
+        <h2 style="margin-bottom: 2rem;">📊 Detailed Results</h2>
+
+        {% for result in results %}
+        <div class="question-result {% if result.is_correct %}correct{% else %}incorrect{% endif %}">
+            <div class="question-result-header">
+                <span class="question-number-badge">Question {{ forloop.counter }}</span>
+                <span class="result-icon-small">
+                    {% if result.is_correct %}✓{% else %}✗{% endif %}
+                </span>
+            </div>
+
+            <div class="question-text-result">{{ result.question.question_text }}</div>
+
+            <div class="answer-review your-answer">
+                <div class="answer-label">Your Answer:</div>
+                {% for answer in result.selected_answers %}
+                    {{ answer.answer_text }}{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    <em>No answer selected</em>
+                {% endfor %}
+            </div>
+
+            {% if not result.is_correct %}
+            <div class="answer-review correct-answer">
+                <div class="answer-label">Correct Answer:</div>
+                {% for answer in result.correct_answers %}
+                    {{ answer.answer_text }}{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if result.question.explanation %}
+            <div class="explanation-box">
+                <strong>💡 Explanation:</strong><br>
+                {{ result.question.explanation }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="actions">
+        {% if not attempt.passed and quiz.max_attempts > 0 %}
+            {% with attempts_left=quiz.max_attempts|add:"-1" %}
+            {% if attempts_left > 0 %}
+            <a href="{% url 'quiz_start' course.slug %}" class="btn btn-primary">
+                🔄 Retake Quiz ({{ attempts_left }} attempt{{ attempts_left|pluralize }} left)
+            </a>
+            {% endif %}
+            {% endwith %}
+        {% elif not attempt.passed %}
+            <a href="{% url 'quiz_start' course.slug %}" class="btn btn-primary">
+                🔄 Retake Quiz
+            </a>
+        {% endif %}
+        
+        <a href="{% url 'course_detail' course.slug %}" class="btn btn-secondary">
+            ← Back to Course
+        </a>
+        
+        {% if certificate %}
+        <a href="{% url 'my_achievements' %}" class="btn btn-primary">
+            🏆 View Achievements
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,299 @@
+{% extends 'lms/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="payment-success-page">
+    <div class="container">
+        <div class="success-card">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            
+            <h1>Payment Successful! 🎉</h1>
+            <p class="success-message">Thank you for your purchase. You are now enrolled in the course.</p>
+            
+            {% if payment %}
+            <div class="course-details">
+                <h2>{{ course.title }}</h2>
+                <p><strong>Instructor:</strong> 
+                    {% with course.instructors.all|first as instructor %}
+                        {{ instructor.name|default:"Expert Instructor" }}
+                    {% endwith %}
+                </p>
+                <p><strong>Amount Paid:</strong> ₹{{ payment.amount|floatformat:2 }}</p>
+                <p><strong>Payment ID:</strong> {{ payment.stripe_payment_id|default:payment.id }}</p>
+                <p><strong>Payment Method:</strong> Stripe Card</p>
+                <p><strong>Date:</strong> {{ payment.payment_date|date:"F d, Y H:i"|default:"Just now" }}</p>
+            </div>
+            {% elif purchase %}
+            <div class="course-details">
+                <h2>{{ course.title }}</h2>
+                <p><strong>Amount Paid:</strong> ₹{{ purchase.amount_paid|floatformat:2 }}</p>
+                <p><strong>Transaction ID:</strong> {{ purchase.transaction_id }}</p>
+                <p><strong>Status:</strong> Payment confirmed</p>
+            </div>
+            {% else %}
+            <div class="course-details">
+                <h2>{{ course.title }}</h2>
+                <p><strong>Status:</strong> Payment confirmed</p>
+                <p><strong>Note:</strong> Your enrollment has been processed successfully.</p>
+            </div>
+            {% endif %}
+            
+            <div class="action-buttons">
+                {% if course %}
+                <a href="{% url 'course_detail' slug=course.slug %}" class="btn-primary">
+                    <i class="fas fa-play-circle"></i> Start Learning
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'my_courses' %}" class="btn-secondary">
+                    <i class="fas fa-book"></i> My Courses
+                </a>
+                
+                <a href="{% url 'all_courses' %}" class="btn-outline">
+                    <i class="fas fa-graduation-cap"></i> Browse More Courses
+                </a>
+            </div>
+            
+            <div class="whats-next">
+                <h3>What's Next?</h3>
+                <ul>
+                    <li><i class="fas fa-video"></i> Access all course videos immediately</li>
+                    <li><i class="fas fa-file-download"></i> Download course materials</li>
+                    <li><i class="fas fa-comments"></i> Join the course discussion forum</li>
+                    <li><i class="fas fa-certificate"></i> Complete the course to get your certificate</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.payment-success-page {
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.success-card {
+    background: white;
+    padding: 50px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 80px;
+    color: #50c878;
+    margin-bottom: 20px;
+    animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.success-card h1 {
+    font-size: 36px;
+    color: #333;
+    margin-bottom: 15px;
+    animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.success-message {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 30px;
+    animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.course-details {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    margin: 30px 0;
+    text-align: left;
+    animation: fadeInUp 0.6s ease-out 0.4s both;
+}
+
+.course-details h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.course-details p {
+    margin: 8px 0;
+    color: #555;
+    font-size: 15px;
+}
+
+.course-details strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin: 30px 0;
+    flex-wrap: wrap;
+    animation: fadeInUp 0.6s ease-out 0.5s both;
+}
+
+.btn-primary, .btn-secondary, .btn-outline {
+    padding: 14px 28px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 15px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #50c878 0%, #3db368 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(80, 200, 120, 0.2);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(80, 200, 120, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #667eea 0%, #5a6fd8 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-outline {
+    background: white;
+    color: #50c878;
+    border: 2px solid #50c878;
+}
+
+.btn-outline:hover {
+    background: #50c878;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(80, 200, 120, 0.2);
+}
+
+.whats-next {
+    margin-top: 40px;
+    text-align: left;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    padding: 25px;
+    border-radius: 10px;
+    border-left: 4px solid #50c878;
+    animation: fadeInUp 0.6s ease-out 0.6s both;
+}
+
+.whats-next h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.whats-next ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.whats-next li {
+    padding: 12px 0;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    border-bottom: 1px solid rgba(80, 200, 120, 0.1);
+}
+
+.whats-next li:last-child {
+    border-bottom: none;
+}
+
+.whats-next i {
+    color: #50c878;
+    width: 24px;
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .success-card {
+        padding: 30px 20px;
+    }
+    
+    .success-card h1 {
+        font-size: 28px;
+    }
+    
+    .success-message {
+        font-size: 16px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-primary, .btn-secondary, .btn-outline {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .whats-next {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .success-icon {
+        font-size: 60px;
+    }
+    
+    .success-card h1 {
+        font-size: 24px;
+    }
+    
+    .course-details h2 {
+        font-size: 20px;
+    }
+}
+</style>
+{% endblock %}

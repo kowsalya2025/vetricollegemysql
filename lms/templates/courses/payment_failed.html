@@ -1,0 +1,88 @@
+{% extends 'lms/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="payment-failed-page">
+    <div class="container">
+        <div class="failed-card">
+            <div class="failed-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            
+            <h1>Payment Failed</h1>
+            <p class="error-message">{{ error_message|default:"Payment was not successful. Please try again." }}</p>
+            
+            {% if course %}
+            <div class="course-details">
+                <h3>You were trying to enroll in:</h3>
+                <p><strong>{{ course.title }}</strong></p>
+                <p>Amount: ₹{{ course.original_price|floatformat:2 }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="suggestions">
+                <h3>What to do next?</h3>
+                <ul>
+                    <li>Check if your card details are correct</li>
+                    <li>Ensure you have sufficient balance</li>
+                    <li>Try a different payment method</li>
+                    <li>Contact your bank if issue persists</li>
+                </ul>
+            </div>
+            
+            <div class="action-buttons">
+                {% if course %}
+                <a href="{% url 'checkout' slug=course.slug %}" class="btn-primary">
+                    <i class="fas fa-redo"></i> Try Again
+                </a>
+                {% endif %}
+                
+                <a href="{% url 'all_courses' %}" class="btn-outline">
+                    <i class="fas fa-search"></i> Browse Courses
+                </a>
+                
+                <a href="{% url 'contact' %}" class="btn-secondary">
+                    <i class="fas fa-headset"></i> Get Help
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.payment-failed-page {
+    padding: 40px 20px;
+    background: #fff5f5;
+    min-height: 100vh;
+}
+
+.failed-card {
+    background: white;
+    padding: 50px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+    border: 1px solid #fee;
+}
+
+.failed-icon {
+    font-size: 80px;
+    color: #ff6b6b;
+    margin-bottom: 20px;
+}
+
+.failed-card h1 {
+    font-size: 36px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.error-message {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+/* ... rest of CSS similar to success page ... */
+</style>
+{% endblock %}

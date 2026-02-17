@@ -1,0 +1,23 @@
+# Environment variables
+.env
+
+# Ignore all sqlite databases
+*.sqlite3
+
+# BUT allow public database
+!db_public.sqlite3
+
+# Still ignore private ones
+db.sqlite3
+db_private.sqlite3
+
+
+
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual env
+venv/
+
