@@ -120,16 +120,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'lms_project.wsgi.application'
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
+
 if DATABASE_URL:
-    # Render/Production - uses DATABASE_URL
+    # Remove ssl-mode from URL before parsing
+    clean_url = DATABASE_URL.replace('?ssl-mode=REQUIRED', '').replace('&ssl-mode=REQUIRED', '')
     DATABASES = {
         "default": dj_database_url.config(
-            default=DATABASE_URL,
+            default=clean_url,
             conn_max_age=600,
         )
     }
+    # Add SSL separately
+    DATABASES["default"]["OPTIONS"] = {"ssl": {"ssl_disabled": False}}
 else:
-    # Local - uses individual DB_ variables
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
@@ -140,7 +143,6 @@ else:
             "PORT": os.environ.get("DB_PORT", "3306"),
         }
     }
-     
 
 
 # DATABASES = {
