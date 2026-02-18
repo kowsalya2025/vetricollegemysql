@@ -129,7 +129,9 @@ DATABASES = {
         "HOST": os.environ.get("DB_HOST", "localhost"),
         "PORT": os.environ.get("DB_PORT", "3306"),
         "OPTIONS": {
+            "charset": "utf8mb4",
             "ssl": {"ssl_disabled": False},
+        } if os.environ.get("DB_HOST", "localhost") != "localhost" else {
             "charset": "utf8mb4",
         },
     }
