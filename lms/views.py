@@ -484,22 +484,61 @@ def payment_page(request, purchase_id):
     return render(request, 'lms/payment_page.html', context)
 
 
+# @login_required
+# @require_POST
+# def complete_payment(request, purchase_id):
+#     """Complete the payment process"""
+#     purchase = get_object_or_404(Purchase, id=purchase_id, user=request.user)
+    
+#     # In real application, verify payment with gateway
+#     # For demo, we'll mark as completed
+#     transaction_id = request.POST.get('transaction_id', f'TXN{purchase.id}')
+    
+#     purchase.payment_status = 'completed'
+#     purchase.transaction_id = transaction_id
+#     purchase.save()
+    
+#     messages.success(request, 'Payment successful! You now have access to the full course.')
+#     return redirect('course_detail', slug=purchase.course.slug)
+
 @login_required
 @require_POST
 def complete_payment(request, purchase_id):
     """Complete the payment process"""
     purchase = get_object_or_404(Purchase, id=purchase_id, user=request.user)
     
-    # In real application, verify payment with gateway
-    # For demo, we'll mark as completed
     transaction_id = request.POST.get('transaction_id', f'TXN{purchase.id}')
     
     purchase.payment_status = 'completed'
     purchase.transaction_id = transaction_id
     purchase.save()
     
-    messages.success(request, 'Payment successful! You now have access to the full course.')
-    return redirect('course_detail', slug=purchase.course.slug)
+    # ✅ Changed: redirect to success page instead of course_detail
+    return redirect('payment_success', order_id=purchase.id)
+
+@login_required
+def payment_success(request, order_id):
+    """Show payment success page then redirect to my courses"""
+    purchase = get_object_or_404(Purchase, id=order_id, user=request.user)
+    course = purchase.course
+
+    total_amount = purchase.amount
+    tax_amount = round(total_amount * 18 / 118, 2)   # extract GST
+    base_price = round(total_amount - tax_amount, 2)
+
+    context = {
+        'course': course,
+        'order_id': purchase.id,
+        'order_date': purchase.purchased_at.strftime("%B %d, %Y"),
+        'payment_method': getattr(purchase, 'payment_method', 'UPI ID'),
+        'course_price': total_amount,
+        'is_discounted': False,
+        'discount_amount': 0,
+        'base_price': base_price,
+        'tax_amount': tax_amount,
+        'total_amount': total_amount,
+    }
+    return render(request, 'lms/payment_success.html', context)
 
 
 
@@ -1093,7 +1132,6 @@ def verify_payment(request):
         if generated_signature != razorpay_signature:
             return JsonResponse({'success': False, 'error': 'Invalid payment signature'}, status=400)
 
-        # Signature valid — get course and update records
         course = Course.objects.get(id=course_id)
 
         # Update Payment record
@@ -1107,15 +1145,18 @@ def verify_payment(request):
             payment_date=timezone.now(),
         )
 
-        # Create Purchase record
-        Purchase.objects.update_or_create(
+        # Get payment amount
+        payment = Payment.objects.get(
+            user=request.user,
+            razorpay_order_id=razorpay_order_id
+        )
+
+        # ✅ Capture purchase with purchase, _
+        purchase, _ = Purchase.objects.update_or_create(
             user=request.user,
             course=course,
             defaults={
-                'amount_paid': Payment.objects.get(
-                    user=request.user,
-                    razorpay_order_id=razorpay_order_id
-                ).amount,
+                'amount_paid': payment.amount,
                 'payment_status': 'completed',
                 'transaction_id': razorpay_payment_id,
                 'full_name': request.user.get_full_name() or request.user.username,
@@ -1135,9 +1176,10 @@ def verify_payment(request):
             }
         )
 
+        # ✅ Now purchase.id works
         return JsonResponse({
             'success': True,
-            'redirect_url': reverse('my_courses')
+            'redirect_url': reverse('payment_success', kwargs={'order_id': purchase.id})
         })
 
     except Exception as e:
@@ -1148,16 +1190,26 @@ def verify_payment(request):
 
 # ========== PAYMENT SUCCESS PAGE ==========
 @login_required
-def payment_success(request):
-    """Payment success page"""
-    course_slug = request.GET.get('course')
-    course = None
-    if course_slug:
-        course = Course.objects.filter(slug=course_slug).first()
+def payment_success(request, order_id):
+    purchase = get_object_or_404(Purchase, id=order_id, user=request.user)
+    course = purchase.course
+    total_amount = purchase.amount_paid  # ← use amount_paid not amount
+    tax_amount = round(total_amount * 18 / 118, 2)
+    base_price = round(total_amount - tax_amount, 2)
 
-    return render(request, 'courses/payment_success.html', {
+    context = {
         'course': course,
-    })
+        'order_id': purchase.id,
+        'order_date': purchase.purchased_at.strftime("%B %d, %Y"),
+        'payment_method': getattr(purchase, 'payment_method', 'UPI ID'),
+        'course_price': total_amount,
+        'is_discounted': False,
+        'discount_amount': 0,
+        'base_price': base_price,
+        'tax_amount': tax_amount,
+        'total_amount': total_amount,
+    }
+    return render(request, 'lms/payment_success.html', context)
 
 
 # ========== PAYMENT FAILED PAGE ==========

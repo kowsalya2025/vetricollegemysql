@@ -91,7 +91,7 @@
 
     .btn-enroll {
         display: inline-block;
-        background: #22c55e;
+        background: #13b61b;
         color: white;
         padding: 1rem 3rem;
         font-size: 1.1rem;
@@ -103,7 +103,7 @@
     }
 
     .btn-enroll:hover {
-        background: #16a34a;
+        background: #13b61b;
         transform: translateY(-2px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
@@ -139,6 +139,15 @@
     color: #000;
 }
 
+
+.feature-header {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* keeps both centered in card */
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
 .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -165,7 +174,8 @@
     font-weight: 600;
     color: #6cc070; /* green */
     display: block;
-    margin-bottom: 15px;
+    margin-bottom: 5px;
+    margin-bottom: 0;
 }
 
 .feature-icon {
@@ -180,8 +190,8 @@
 }
 
 .feature-icon img {
-    width: 24px;
-    height: 24px;
+    width: 34px;
+    height: 34px;
 }
 
 .feature-card h3 {
@@ -227,11 +237,13 @@
 .about-img {
     width: 100%;
     height: 550px;
-    object-fit: cover;
+    object-fit: contain;   /* shows full image */
     border-radius: 12px;
     box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
     border: 1px solid #f0f0f0;
 }
+
+
 
 .image-placeholder {
     width: 100%;
@@ -290,7 +302,6 @@
     padding: 25px;
     background: #f8f9ff;
     border-radius: 10px;
-    border-left: 4px solid #4a6cf7;
     box-shadow: 0 5px 15px rgba(74, 108, 247, 0.05);
 }
 
@@ -340,7 +351,7 @@
 }
 
 .btn-primary:hover {
-    background: #3a5ce5;
+    background: #1ca42e;
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(74, 108, 247, 0.25);
     gap: 12px;
@@ -449,7 +460,8 @@
 }
 
 .course-card:hover {
-    border-color: #18b825;;
+    border-color: #18b825;
+    color: #3cb043;
     background-color: rgba(80, 200, 120, 0.05);
     transform: translateY(-4px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
@@ -1050,7 +1062,7 @@
 /* Quote */
 .quote {
     margin-left: auto;
-    font-size: 26px;
+    font-size: 46px;
     color: #3cb043;
     opacity: 0.8;
 }
@@ -1245,16 +1257,23 @@
     <div class="features-grid">
         {% for item in feature_section.items.all %}
         <div class="feature-card">
-            <span class="feature-number">{{ item.number|stringformat:"02d" }}</span>
-            <div class="feature-icon">
-                <img src="{% static 'images/capvts.png' %}" alt="icon">
+
+            <div class="feature-header">
+                <span class="feature-number">{{ item.number }}</span>
+
+                <div class="feature-icon">
+                    <img src="{% static 'images/gicon.png' %}" alt="icon">
+                </div>
             </div>
+
             <h3>{{ item.heading }}</h3>
             <p>{{ item.description }}</p>
+
         </div>
         {% endfor %}
     </div>
 </section>
+
 
 
 <!-- About Section -->
@@ -1382,11 +1401,11 @@
             <h2 style="font-size: 2rem; font-weight: 700; color: #111;">
                 {% with banner.title|safe as t %}
                     {{ t|cut:banner.highlight_text }} 
-                    <span style="color: #22c55e;">{{ banner.highlight_text }}</span>
+                    <span style="color: #18b825;">{{ banner.highlight_text }}</span>
                 {% endwith %}
             </h2>
             <p style="margin-top: 1rem; font-size: 1rem; color: #374151;">{{ banner.subtitle }}</p>
-            <a href="{{ banner.button_url }}" style="display: inline-block; margin-top: 1.5rem; background-color: #22c55e; color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
+            <a href="{{ banner.button_url }}" style="display: inline-block; margin-top: 1.5rem; background-color: #18b825; color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.3s ease;">
                 {{ banner.button_text }}
             </a>
         </div>
@@ -1396,7 +1415,7 @@
 
 <!-- instructor -->
 <div class="instructors-section">
-    <h2>Our Best <span style="color: #28a745;">Instructor</span></h2>
+    <h2>Our Best <span style="color: #18b825;">Instructor</span></h2>
 
     <!-- Swiper -->
     <div class="swiper mySwiper">
@@ -1492,7 +1511,8 @@
                             <h4>{{ t.name }}</h4>
                             <small>{{ t.role }}</small>
                         </div>
-                        <span class="quote">❝❞</span>
+                       
+                        <span class="quote">❞</span>
                     </div>
 
                     <p class="testimonial-text">
