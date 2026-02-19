@@ -203,33 +203,34 @@
             <form method="post">
                 {% csrf_token %}
                 
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <span class="input-icon">👤</span>
-                        <input type="text" name="name" class="form-control" placeholder="Name" required>
-                    </div>
-                </div>
+             <div class="form-group">
+    <div class="input-wrapper">
+        <span class="input-icon"><i class="far fa-user"></i></span>
+        <input type="text" name="name" class="form-control" placeholder="Name" required>
+    </div>
+</div>
 
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <span class="input-icon">📧</span>
-                        <input type="email" name="email" class="form-control" placeholder="Email" required>
-                    </div>
-                </div>
+<div class="form-group">
+    <div class="input-wrapper">
+        <span class="input-icon"><i class="far fa-envelope"></i></span>
+        <input type="email" name="email" class="form-control" placeholder="Email" required>
+    </div>
+</div>
 
-                <div class="form-group">
+ <div class="form-group">
                     <div class="input-wrapper">
-                        <span class="input-icon">🔒</span>
+                        <span class="input-icon"><i class="fa fa-lock"></i></span>
                         <input type="password" name="password" class="form-control" placeholder="Password" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <div class="input-wrapper">
-                        <span class="input-icon">🔒</span>
+                        <span class="input-icon"><i class="fa fa-lock"></i></span>
                         <input type="password" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
                     </div>
                 </div>
+
 
                 <button type="submit" class="btn-submit">Create an account</button>
             </form>

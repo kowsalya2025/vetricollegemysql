@@ -30,7 +30,6 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Top green banner */
   .success-banner {
     background: linear-gradient(135deg, #4caf50, #66bb6a);
     padding: 36px 40px 32px;
@@ -39,8 +38,7 @@
   }
 
   .checkmark-circle {
-    width: 72px;
-    height: 72px;
+    width: 72px; height: 72px;
     border-radius: 50%;
     background: rgba(255,255,255,0.25);
     display: inline-flex;
@@ -55,41 +53,42 @@
     to   { transform: scale(1); }
   }
 
-  .checkmark-circle svg {
-    width: 40px;
-    height: 40px;
+  .checkmark-circle svg { width: 40px; height: 40px; }
+
+  .success-banner h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 6px; }
+  .success-banner p  { font-size: 0.9rem; opacity: 0.9; margin: 0; }
+
+  /* Email notice */
+  .email-notice {
+    background: #e3f2fd;
+    border-bottom: 1px solid #bbdefb;
+    padding: 13px 36px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.83rem;
+    color: #1565c0;
+    animation: fadeSlideUp 0.5s ease 0.4s both;
   }
 
-  .success-banner h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0 0 6px;
-  }
+  .email-notice svg { flex-shrink: 0; }
 
-  .success-banner p {
-    font-size: 0.9rem;
-    opacity: 0.9;
-    margin: 0;
-  }
-
-  /* Body */
   .success-body {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 0;
   }
 
   @media (max-width: 600px) {
     .success-body { grid-template-columns: 1fr; }
+    .email-notice { flex-direction: column; align-items: flex-start; }
   }
 
-  /* Left: order meta */
   .order-meta {
     padding: 32px 36px;
     border-right: 1px solid #f0f0f0;
   }
 
-  .order-meta h3 {
+  .order-meta h3, .order-summary h3 {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -107,7 +106,6 @@
   }
 
   .meta-row:last-child { border-bottom: none; }
-
   .meta-label { color: #757575; }
   .meta-value { font-weight: 600; color: #212121; }
 
@@ -120,18 +118,9 @@
     font-weight: 600;
   }
 
-  /* Right: order summary */
   .order-summary {
     padding: 32px 36px;
     background: #fafffe;
-  }
-
-  .order-summary h3 {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: #9e9e9e;
-    margin: 0 0 20px;
   }
 
   .course-row {
@@ -144,17 +133,14 @@
   }
 
   .course-thumb {
-    width: 54px;
-    height: 54px;
+    width: 54px; height: 54px;
     border-radius: 8px;
     object-fit: cover;
-    background: #e8f5e9;
     flex-shrink: 0;
   }
 
   .course-thumb-placeholder {
-    width: 54px;
-    height: 54px;
+    width: 54px; height: 54px;
     border-radius: 8px;
     background: linear-gradient(135deg, #a5d6a7, #66bb6a);
     display: flex;
@@ -169,12 +155,6 @@
     font-weight: 600;
     font-size: 0.9rem;
     color: #212121;
-    margin-bottom: 2px;
-  }
-
-  .course-info .course-instructor {
-    font-size: 0.78rem;
-    color: #9e9e9e;
   }
 
   .price-rows .price-row {
@@ -196,7 +176,6 @@
     color: #212121;
   }
 
-  /* Footer */
   .success-footer {
     padding: 24px 36px;
     background: #f1fdf1;
@@ -208,15 +187,8 @@
     flex-wrap: wrap;
   }
 
-  .redirect-msg {
-    font-size: 0.82rem;
-    color: #757575;
-  }
-
-  .redirect-msg span {
-    font-weight: 600;
-    color: #4caf50;
-  }
+  .redirect-msg { font-size: 0.82rem; color: #757575; }
+  .redirect-msg span { font-weight: 600; color: #4caf50; }
 
   .btn-go {
     background: #4caf50;
@@ -235,11 +207,7 @@
 
   .btn-go:hover { background: #388e3c; color: #fff; }
 
-  .countdown {
-    font-size: 0.78rem;
-    color: #9e9e9e;
-    margin-top: 4px;
-  }
+  .countdown { font-size: 0.78rem; color: #9e9e9e; margin-top: 4px; }
 </style>
 
 <div class="success-wrapper">
@@ -248,21 +216,43 @@
     <!-- Banner -->
     <div class="success-banner">
       <div class="checkmark-circle">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"
+             stroke-linecap="round" stroke-linejoin="round">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
       </div>
       <h1>Congratulations! Your Purchase Is Complete</h1>
-      <p>We will send you a confirmation email as soon as your order gets confirmed</p>
+      <p>You're all set — your course access has been activated instantly.</p>
+    </div>
+
+    <!-- Email notice -->
+    <div class="email-notice">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+           stroke="#1565c0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2"/>
+        <path d="M2 7l10 7 10-7"/>
+      </svg>
+      {% if email_sent %}
+        <span>
+          <strong>Invoice sent!</strong>
+          A confirmation email with your PDF invoice has been delivered to
+          <strong>{{ request.user.email }}</strong>.
+          Check your inbox (and spam folder just in case).
+        </span>
+      {% else %}
+        <span>
+          A confirmation email with your invoice was previously sent to
+          <strong>{{ request.user.email }}</strong>.
+        </span>
+      {% endif %}
     </div>
 
     <!-- Body -->
     <div class="success-body">
 
-      <!-- Left: Order Meta -->
+      <!-- Order Info -->
       <div class="order-meta">
         <h3>Order Information</h3>
-
         <div class="meta-row">
           <span class="meta-label">Order Date</span>
           <span class="meta-value">{{ order_date }}</span>
@@ -279,9 +269,15 @@
           <span class="meta-label">Order Status</span>
           <span class="status-badge">Confirmed</span>
         </div>
+        <div class="meta-row">
+          <span class="meta-label">Invoice</span>
+          <span class="meta-value" style="font-size:0.8rem;color:#1565c0;">
+            Sent to your email 📧
+          </span>
+        </div>
       </div>
 
-      <!-- Right: Order Summary -->
+      <!-- Order Summary -->
       <div class="order-summary">
         <h3>Order Details</h3>
 
@@ -324,20 +320,23 @@
 
     </div>
 
-    <!-- Footer with redirect -->
+    <!-- Footer -->
     <div class="success-footer">
       <div>
-        <div class="redirect-msg">You'll be redirected to <span>My Courses</span> automatically</div>
-        <div class="countdown" id="countdown-text">Redirecting in <strong id="timer">5</strong> seconds...</div>
+        <div class="redirect-msg">
+          You'll be redirected to <span>My Courses</span> automatically
+        </div>
+        <div class="countdown" id="countdown-text">
+          Redirecting in <strong id="timer">5</strong> seconds…
+        </div>
       </div>
-      <a href="{% url 'my_courses' %}" class="btn-go" id="go-btn">Go to My Courses →</a>
+      <a href="{% url 'my_courses' %}" class="btn-go">Go to My Courses →</a>
     </div>
 
   </div>
 </div>
 
 <script>
-  // Auto-redirect countdown
   let seconds = 5;
   const timerEl = document.getElementById('timer');
   const interval = setInterval(() => {

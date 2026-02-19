@@ -1189,27 +1189,304 @@ def verify_payment(request):
 
 
 # ========== PAYMENT SUCCESS PAGE ==========
+"""
+lms/views/payment_success.py
+Payment-success view — generates invoice PDF and sends confirmation email.
+"""
+
+import logging
+import datetime
+
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
+
+from .models import Payment, Course, CourseEnrollment  # adjust to your actual model paths
+from .utils.email_utils import send_purchase_confirmation_email
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def payment_success(request, order_id):
-    purchase = get_object_or_404(Purchase, id=order_id, user=request.user)
-    course = purchase.course
-    total_amount = purchase.amount_paid  # ← use amount_paid not amount
-    tax_amount = round(total_amount * 18 / 118, 2)
-    base_price = round(total_amount - tax_amount, 2)
+    purchase = get_object_or_404(Purchase, pk=order_id, user=request.user)
+
+    email_sent_key = f"invoice_sent_{purchase.id}"
+    already_sent   = request.session.get(email_sent_key, False)
+
+    student      = request.user
+    course       = purchase.course
+    course_price = float(purchase.amount_paid)
+    tax_amount   = round(course_price * 18 / 118, 2)
+    base_price   = round(course_price - tax_amount, 2)
+
+    order_data = {
+        "order_id":        purchase.id,
+        "order_date":      purchase.purchased_at.strftime("%d %b %Y"),
+        "payment_method":  purchase.transaction_id or "Razorpay",
+        "student_name":    purchase.full_name or student.get_full_name() or student.username,
+        "student_email":   purchase.email or student.email,
+        "course_title":    course.title,
+        "course_price":    course_price,
+        "is_discounted":   False,
+        "discount_amount": 0,
+        "base_price":      base_price,
+        "tax_amount":      tax_amount,
+        "total_amount":    course_price,
+        "platform_name":   "EduLearn LMS",
+        "my_courses_url":  request.build_absolute_uri(reverse("my_courses")),
+        "year":            datetime.date.today().year,
+    }
+
+    if not already_sent:
+        try:
+            send_purchase_confirmation_email(order_data)
+            request.session[email_sent_key] = True
+            logger.info("Invoice email sent for purchase #%s to %s", purchase.id, student.email)
+        except Exception as exc:
+            logger.error("Failed to send invoice email for purchase #%s: %s", purchase.id, exc, exc_info=True)
 
     context = {
-        'course': course,
-        'order_id': purchase.id,
-        'order_date': purchase.purchased_at.strftime("%B %d, %Y"),
-        'payment_method': getattr(purchase, 'payment_method', 'UPI ID'),
-        'course_price': total_amount,
-        'is_discounted': False,
-        'discount_amount': 0,
-        'base_price': base_price,
-        'tax_amount': tax_amount,
-        'total_amount': total_amount,
+        "order_id":        purchase.id,
+        "order_date":      order_data["order_date"],
+        "payment_method":  order_data["payment_method"],
+        "course":          course,
+        "course_price":    course_price,
+        "is_discounted":   False,
+        "discount_amount": 0,
+        "base_price":      base_price,
+        "tax_amount":      tax_amount,
+        "total_amount":    course_price,
+        "email_sent":      not already_sent,
     }
-    return render(request, 'lms/payment_success.html', context)
+    return render(request, "lms/payment_success.html", context)
+
+"""
+lms/utils/invoice_generator.py
+Generate a professional PDF invoice for course purchases.
+"""
+
+import io
+from reportlab.lib.pagesizes import A4
+from reportlab.lib import colors
+from reportlab.lib.units import mm
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+)
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
+
+
+# ── Brand colours ─────────────────────────────────────────────────────────────
+GREEN       = colors.HexColor("#4CAF50")
+DARK_GREEN  = colors.HexColor("#2E7D32")
+LIGHT_GREEN = colors.HexColor("#E8F5E9")
+GREY_TEXT   = colors.HexColor("#757575")
+DARK_TEXT   = colors.HexColor("#212121")
+WHITE       = colors.white
+
+
+def _s(name, base_styles, **kw):
+    """Shortcut to create a named ParagraphStyle."""
+    return ParagraphStyle(name, parent=base_styles["Normal"], **kw)
+
+
+def generate_invoice_pdf(order_data: dict) -> bytes:
+    """
+    Build a PDF invoice and return the raw bytes.
+
+    Required keys in `order_data`:
+        order_id, order_date, payment_method,
+        student_name, student_email,
+        course_title, course_price (float),
+        is_discounted (bool), discount_amount (float),
+        base_price (float), tax_amount (float), total_amount (float),
+        platform_name  (optional, default "EduLearn LMS")
+    """
+    buffer = io.BytesIO()
+    platform = order_data.get("platform_name", "EduLearn LMS")
+    styles   = getSampleStyleSheet()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=20 * mm,
+        leftMargin=20 * mm,
+        topMargin=15 * mm,
+        bottomMargin=20 * mm,
+    )
+    W = doc.width
+
+    # ── Paragraph style factory ────────────────────────────────────────────────
+    S = {
+        "brand":   _s("brand",   styles, fontSize=22, textColor=GREEN,      fontName="Helvetica-Bold"),
+        "tagline": _s("tagline", styles, fontSize=8,  textColor=GREY_TEXT),
+        "invoice": _s("invoice", styles, fontSize=18, textColor=DARK_TEXT,  fontName="Helvetica-Bold", alignment=TA_RIGHT),
+        "label":   _s("label",   styles, fontSize=8,  textColor=GREY_TEXT),
+        "value":   _s("value",   styles, fontSize=9,  textColor=DARK_TEXT,  fontName="Helvetica-Bold"),
+        "normal":  _s("normal",  styles, fontSize=9,  textColor=DARK_TEXT),
+        "th":      _s("th",      styles, fontSize=8,  textColor=WHITE,      fontName="Helvetica-Bold"),
+        "th_r":    _s("th_r",    styles, fontSize=8,  textColor=WHITE,      fontName="Helvetica-Bold", alignment=TA_RIGHT),
+        "th_c":    _s("th_c",    styles, fontSize=8,  textColor=WHITE,      fontName="Helvetica-Bold", alignment=TA_CENTER),
+        "cell_c":  _s("cell_c",  styles, fontSize=9,  textColor=DARK_TEXT,  alignment=TA_CENTER),
+        "cell_r":  _s("cell_r",  styles, fontSize=9,  textColor=DARK_TEXT,  alignment=TA_RIGHT),
+        "footer":  _s("footer",  styles, fontSize=7,  textColor=GREY_TEXT,  alignment=TA_CENTER),
+        "thanks":  _s("thanks",  styles, fontSize=9,  textColor=GREY_TEXT,  alignment=TA_CENTER),
+    }
+
+    story = []
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # 1. HEADER  (brand left | INVOICE right)
+    # ─────────────────────────────────────────────────────────────────────────
+    hdr = Table(
+        [[Paragraph(platform, S["brand"]), Paragraph("INVOICE", S["invoice"])]],
+        colWidths=[W * 0.5, W * 0.5],
+    )
+    hdr.setStyle(TableStyle([
+        ("VALIGN",         (0, 0), (-1, -1), "MIDDLE"),
+        ("BOTTOMPADDING",  (0, 0), (-1, -1), 0),
+    ]))
+    story.append(hdr)
+    story.append(Paragraph("Online Learning Platform", S["tagline"]))
+    story.append(Spacer(1, 4 * mm))
+    story.append(HRFlowable(width="100%", thickness=2, color=GREEN, spaceAfter=6 * mm))
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # 2. ORDER META  (left: order info | right: bill-to)
+    # ─────────────────────────────────────────────────────────────────────────
+    def meta_block(rows):
+        data = [[Paragraph(lbl, S["label"]), Paragraph(str(val), S["value"])]
+                for lbl, val in rows]
+        t = Table(data, colWidths=[32 * mm, 55 * mm])
+        t.setStyle(TableStyle([
+            ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+            ("TOPPADDING",    (0, 0), (-1, -1), 2),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
+        ]))
+        return t
+
+    left_meta = meta_block([
+        ("Invoice No.",    f"#{order_data['order_id']}"),
+        ("Date",           order_data["order_date"]),
+        ("Payment Method", order_data["payment_method"]),
+        ("Status",         "Paid ✓"),
+    ])
+    right_meta = meta_block([
+        ("Bill To", order_data["student_name"]),
+        ("Email",   order_data["student_email"]),
+    ])
+
+    meta_tbl = Table([[left_meta, right_meta]], colWidths=[W * 0.5, W * 0.5])
+    meta_tbl.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP")]))
+    story.append(meta_tbl)
+    story.append(Spacer(1, 6 * mm))
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # 3. LINE-ITEMS TABLE
+    # ─────────────────────────────────────────────────────────────────────────
+    col_w = [W * 0.55, W * 0.15, W * 0.15, W * 0.15]
+
+    items_data = [
+        # Header row
+        [
+            Paragraph("DESCRIPTION", S["th"]),
+            Paragraph("QTY",         S["th_c"]),
+            Paragraph("UNIT PRICE",  S["th_r"]),
+            Paragraph("AMOUNT",      S["th_r"]),
+        ],
+        # Single item row
+        [
+            Paragraph(order_data["course_title"], S["normal"]),
+            Paragraph("1",                        S["cell_c"]),
+            Paragraph(f"\u20b9{order_data['course_price']:,.2f}", S["cell_r"]),
+            Paragraph(f"\u20b9{order_data['course_price']:,.2f}", S["cell_r"]),
+        ],
+    ]
+
+    items_tbl = Table(items_data, colWidths=col_w, repeatRows=1)
+    items_tbl.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, 0),  GREEN),
+        ("ROWBACKGROUND", (0, 1), (-1, 1),  LIGHT_GREEN),
+        ("GRID",          (0, 0), (-1, -1), 0.5, colors.HexColor("#E0E0E0")),
+        ("TOPPADDING",    (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 8),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+    story.append(items_tbl)
+    story.append(Spacer(1, 4 * mm))
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # 4. TOTALS BLOCK  (right-aligned)
+    # ─────────────────────────────────────────────────────────────────────────
+    tw        = W * 0.45
+    col_left  = tw * 0.55
+    col_right = tw * 0.45
+
+    def price_row(label, amount, red=False, highlight=False):
+        txt_color = WHITE if highlight else (colors.HexColor("#E53935") if red else DARK_TEXT)
+        fn        = "Helvetica-Bold" if highlight else "Helvetica"
+        fs        = 10 if highlight else 9
+        lp = _s(f"lbl_{label}", styles, fontSize=fs, textColor=txt_color, fontName=fn)
+        rp = _s(f"amt_{label}", styles, fontSize=fs, textColor=txt_color, fontName=fn, alignment=TA_RIGHT)
+        return [Paragraph(label, lp), Paragraph(amount, rp)]
+
+    totals_rows = []
+    if order_data.get("is_discounted"):
+        totals_rows.append(price_row(
+            "Original Price",
+            f"\u20b9{float(order_data['course_price']):,.2f}"
+        ))
+        totals_rows.append(price_row(
+            "Discount",
+            f"-\u20b9{float(order_data['discount_amount']):,.2f}",
+            red=True
+        ))
+    totals_rows.append(price_row("Subtotal",   f"\u20b9{float(order_data['base_price']):,.2f}"))
+    totals_rows.append(price_row("GST (18%)", f"\u20b9{float(order_data['tax_amount']):,.2f}"))
+    totals_rows.append(price_row("TOTAL PAID", f"\u20b9{float(order_data['total_amount']):,.2f}", highlight=True))
+
+    last_idx = len(totals_rows) - 1
+    totals_tbl = Table(totals_rows, colWidths=[col_left, col_right])
+    totals_tbl.setStyle(TableStyle([
+        ("TOPPADDING",    (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
+        ("LINEABOVE",     (0, last_idx), (-1, last_idx), 1.5, GREEN),
+        ("BACKGROUND",    (0, last_idx), (-1, last_idx), GREEN),
+    ]))
+
+    # Push totals block to the right side
+    wrapper = Table([[None, totals_tbl]], colWidths=[W - tw, tw])
+    wrapper.setStyle(TableStyle([
+        ("VALIGN",        (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 0),
+        ("TOPPADDING",    (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    story.append(wrapper)
+    story.append(Spacer(1, 10 * mm))
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # 5. FOOTER
+    # ─────────────────────────────────────────────────────────────────────────
+    story.append(HRFlowable(width="100%", thickness=1, color=LIGHT_GREEN, spaceAfter=4 * mm))
+    story.append(Paragraph(
+        f"Thank you for your purchase, {order_data['student_name']}! "
+        "We wish you a great learning experience.",
+        S["thanks"]
+    ))
+    story.append(Spacer(1, 2 * mm))
+    story.append(Paragraph(
+        f"Questions? Reply to this email or visit our Help Center. — {platform}",
+        S["footer"]
+    ))
+
+    doc.build(story)
+    return buffer.getvalue()
 
 
 # ========== PAYMENT FAILED PAGE ==========
