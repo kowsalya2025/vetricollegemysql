@@ -337,10 +337,10 @@ RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET')
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'kowsalyacse1992@gmail.com'       # ← your Gmail address
-EMAIL_HOST_PASSWORD = 'mljunabrnedeunpx'   # ← Gmail App Password (not your login password)
-DEFAULT_FROM_EMAIL = 'EduLearn LMS <kowsalyacse1992@gmail.com>'
+EMAIL_BACKEND     = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST        = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT        = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS     = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER   = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@example.com')
