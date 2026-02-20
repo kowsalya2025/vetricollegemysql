@@ -294,9 +294,6 @@ MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 
 
-# Email Settings (for development)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv("CLOUDINARY_CLOUD_NAME"),
