@@ -254,25 +254,3 @@ def send_purchase_confirmation_email(order_data: dict) -> None:
         msg.send(fail_silently=False)
         print("Email sent via Django SMTP!")
 
-#     # ── Generate PDF ───────────────────────────────────────────────────────────
-#     pdf_bytes = generate_invoice_pdf(order_data)
-
-#     # ── Compose & send email via SendGrid HTTP API ─────────────────────────────
- 
-# # ── Compose & send email ───────────────────────────────────────────────────────
-#     subject = f"[{platform}] Purchase Confirmed – #{order_data['order_id']}"
-#     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", f"noreply@{platform.lower().replace(' ', '')}.com")
-
-#     msg = EmailMultiAlternatives(
-#         subject    = subject,
-#         body       = text_body,
-#         from_email = from_email,
-#         to         = [student_email],
-#     )
-#     msg.attach_alternative(html_body, "text/html")
-#     msg.attach(
-#         filename     = f"Invoice_{order_data['order_id']}.pdf",
-#         content      = pdf_bytes,
-#         mimetype     = "application/pdf",
-#     )
-#     msg.send(fail_silently=False)
