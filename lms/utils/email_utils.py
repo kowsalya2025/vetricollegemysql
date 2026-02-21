@@ -202,25 +202,77 @@ def send_purchase_confirmation_email(order_data: dict) -> None:
         f"— {platform} Team"
     )
 
-    # ── Generate PDF ───────────────────────────────────────────────────────────
+ # ── Generate PDF ───────────────────────────────────────────────────────────
     pdf_bytes = generate_invoice_pdf(order_data)
 
-    # ── Compose & send email via SendGrid HTTP API ─────────────────────────────
- 
-# ── Compose & send email ───────────────────────────────────────────────────────
-    subject = f"[{platform}] Purchase Confirmed – #{order_data['order_id']}"
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", f"noreply@{platform.lower().replace(' ', '')}.com")
+    subject    = f"[{platform}] Purchase Confirmed – #{order_data['order_id']}"
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@example.com")
 
-    msg = EmailMultiAlternatives(
-        subject    = subject,
-        body       = text_body,
-        from_email = from_email,
-        to         = [student_email],
-    )
-    msg.attach_alternative(html_body, "text/html")
-    msg.attach(
-        filename     = f"Invoice_{order_data['order_id']}.pdf",
-        content      = pdf_bytes,
-        mimetype     = "application/pdf",
-    )
-    msg.send(fail_silently=False)
+    # ── Use SendGrid on Render, Django SMTP locally ────────────────────────────
+    api_key = os.environ.get("SENDGRID_API_KEY")
+
+    if api_key:
+        # ── RENDER: SendGrid Web API ──────────────────────────────────────────
+        import sendgrid
+        from sendgrid.helpers.mail import Mail, Attachment, FileContent, FileName, FileType, Disposition
+
+        sg_mail = Mail(
+            from_email         = from_email,
+            to_emails          = student_email,
+            subject            = subject,
+            html_content       = html_body,
+            plain_text_content = text_body,
+        )
+        encoded_pdf = base64.b64encode(pdf_bytes).decode()
+        sg_mail.add_attachment(Attachment(
+            file_content = FileContent(encoded_pdf),
+            file_name    = FileName(f"Invoice_{order_data['order_id']}.pdf"),
+            file_type    = FileType("application/pdf"),
+            disposition  = Disposition("attachment"),
+        ))
+        try:
+            sg = sendgrid.SendGridAPIClient(api_key=api_key)
+            response = sg.send(sg_mail)
+            print(f"Email sent via SendGrid! Status: {response.status_code}")
+        except Exception as e:
+            print(f"SendGrid failed: {e}")
+
+    else:
+        # ── LOCAL: Django SMTP (Gmail) ────────────────────────────────────────
+        msg = EmailMultiAlternatives(
+            subject    = subject,
+            body       = text_body,
+            from_email = from_email,
+            to         = [student_email],
+        )
+        msg.attach_alternative(html_body, "text/html")
+        msg.attach(
+            filename = f"Invoice_{order_data['order_id']}.pdf",
+            content  = pdf_bytes,
+            mimetype = "application/pdf",
+        )
+        msg.send(fail_silently=False)
+        print("Email sent via Django SMTP!")
+
+#     # ── Generate PDF ───────────────────────────────────────────────────────────
+#     pdf_bytes = generate_invoice_pdf(order_data)
+
+#     # ── Compose & send email via SendGrid HTTP API ─────────────────────────────
+ 
+# # ── Compose & send email ───────────────────────────────────────────────────────
+#     subject = f"[{platform}] Purchase Confirmed – #{order_data['order_id']}"
+#     from_email = getattr(settings, "DEFAULT_FROM_EMAIL", f"noreply@{platform.lower().replace(' ', '')}.com")
+
+#     msg = EmailMultiAlternatives(
+#         subject    = subject,
+#         body       = text_body,
+#         from_email = from_email,
+#         to         = [student_email],
+#     )
+#     msg.attach_alternative(html_body, "text/html")
+#     msg.attach(
+#         filename     = f"Invoice_{order_data['order_id']}.pdf",
+#         content      = pdf_bytes,
+#         mimetype     = "application/pdf",
+#     )
+#     msg.send(fail_silently=False)
