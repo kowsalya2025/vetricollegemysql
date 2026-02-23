@@ -41,7 +41,7 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
         platform_name  (optional, default "EduLearn LMS")
     """
     buffer = io.BytesIO()
-    platform = order_data.get("platform_name", "EduLearn LMS")
+    platform = order_data.get("platform_name", "Vetri Digital College")
     styles   = getSampleStyleSheet()
 
     doc = SimpleDocTemplate(

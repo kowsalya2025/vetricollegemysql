@@ -1303,7 +1303,7 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
         platform_name  (optional, default "EduLearn LMS")
     """
     buffer = io.BytesIO()
-    platform = order_data.get("platform_name", "EduLearn LMS")
+    platform = order_data.get("platform_name", "Vetri Digital College")
     styles   = getSampleStyleSheet()
 
     doc = SimpleDocTemplate(
@@ -2110,75 +2110,7 @@ def download_certificate(request, certificate_id):
     except Exception as e:
         return HttpResponse(f'Error generating PDF: {str(e)}', status=500)
 
-# from django.http import HttpResponse
-# from django.template.loader import render_to_string
-# from django.shortcuts import get_object_or_404
-# from playwright.sync_api import sync_playwright
-# from pathlib import Path
-# import tempfile
-# import os
 
-# from .models import Certificate  # Add this import
-
-# def download_certificate(request, certificate_id):
-#     certificate = get_object_or_404(Certificate, certificate_id=certificate_id)
-    
-#     if certificate.user != request.user:
-#         return HttpResponse("Unauthorized", status=403)
-    
-#     # Create a standalone HTML (without extending base.html)
-#     html_string = render_to_string('lms/certificate_pdf.html', {
-#         'certificate': certificate
-#     })
-    
-#     temp_path = None
-#     try:
-#         # Create temp HTML file
-#         with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
-#             f.write(html_string)
-#             temp_path = f.name
-        
-#         # Generate PDF using Playwright
-#         with sync_playwright() as p:
-#             browser = p.chromium.launch(headless=True)
-#             page = browser.new_page()
-            
-#             # Use pathlib for cross-platform file URL
-#             file_url = Path(temp_path).as_uri()
-#             page.goto(file_url)
-            
-#             # Wait for page to load
-#             page.wait_for_load_state('networkidle')
-            
-#             # Generate PDF
-#             pdf_bytes = page.pdf(
-#                 format='A4',
-#                 landscape=True,
-#                 print_background=True,
-#                 margin={'top': '0', 'right': '0', 'bottom': '0', 'left': '0'}
-#             )
-#             browser.close()
-        
-#         # Return PDF
-#         response = HttpResponse(pdf_bytes, content_type='application/pdf')
-#         student_name = certificate.user.get_full_name() or certificate.user.email
-#         safe_name = "".join(c if c.isalnum() or c=='_' else '_' for c in student_name.replace(' ', '_'))
-
-#         response['Content-Disposition'] = f'attachment; filename="{safe_name}_Certificate.pdf"'
-#         return response
-        
-#     except Exception as e:
-#         return HttpResponse(f'Error generating PDF: {str(e)}', status=500)
-    
-#     finally:
-#         # Clean up temp file
-#         if temp_path and os.path.exists(temp_path):
-#             os.unlink(temp_path)
-
-
-
-# views.py - Add this view to generate PDF brochure dynamically
-# At the TOP of your views.py, make sure you have these imports:
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse

@@ -155,7 +155,7 @@ def send_purchase_confirmation_email(order_data: dict) -> None:
         year            – current year (for footer copyright)
     """
     import datetime
-    platform      = order_data.get("platform_name", "EduLearn LMS")
+    platform      = order_data.get("platform_name", "Vetri Digital College")
     student_email = order_data["student_email"]
     student_name  = order_data["student_name"]
     year          = order_data.get("year", datetime.date.today().year)
