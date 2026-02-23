@@ -2,7 +2,6 @@
 lms/utils/invoice_generator.py
 Generate a professional PDF invoice for course purchases.
 """
-
 import io
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
@@ -12,9 +11,31 @@ from reportlab.platypus import (
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
-# ── Brand colours ─────────────────────────────────────────────────────────────
+try:
+    pdfmetrics.registerFont(
+        TTFont("Unicode", "C:/Windows/Fonts/arial.ttf")
+    )
+    pdfmetrics.registerFont(
+        TTFont("Unicode-Bold", "C:/Windows/Fonts/arialbd.ttf")
+    )
+    print("Arial fonts registered successfully")
+except Exception as e:
+    print("Font registration failed:", e)  # Fall back gracefully if path differs on the deployment server
+
+# Use these aliases throughout — swap back to Helvetica if registration failed
+def _font(bold=False):
+    name = "Unicode-Bold" if bold else "Unicode"
+    return name if name in pdfmetrics.getRegisteredFontNames() else (
+        "Helvetica-Bold" if bold else "Helvetica"
+    )
+
+# ── Brand colours ────────────────────────────────────────────────────────────
 GREEN       = colors.HexColor("#4CAF50")
 DARK_GREEN  = colors.HexColor("#2E7D32")
 LIGHT_GREEN = colors.HexColor("#E8F5E9")
@@ -38,11 +59,12 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
         course_title, course_price (float),
         is_discounted (bool), discount_amount (float),
         base_price (float), tax_amount (float), total_amount (float),
-        platform_name  (optional, default "EduLearn LMS")
+        platform_name (optional, default "Vetri Digital College")
     """
     buffer = io.BytesIO()
     platform = order_data.get("platform_name", "Vetri Digital College")
-    styles   = getSampleStyleSheet()
+
+    styles = getSampleStyleSheet()
 
     doc = SimpleDocTemplate(
         buffer,
@@ -54,35 +76,38 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
     )
     W = doc.width
 
-    # ── Paragraph style factory ────────────────────────────────────────────────
+    FONT      = _font(bold=False)
+    FONT_BOLD = _font(bold=True)
+
+    # ── Paragraph style factory ──────────────────────────────────────────────
     S = {
-        "brand":   _s("brand",   styles, fontSize=22, textColor=GREEN,      fontName="Helvetica-Bold"),
-        "tagline": _s("tagline", styles, fontSize=8,  textColor=GREY_TEXT),
-        "invoice": _s("invoice", styles, fontSize=18, textColor=DARK_TEXT,  fontName="Helvetica-Bold", alignment=TA_RIGHT),
-        "label":   _s("label",   styles, fontSize=8,  textColor=GREY_TEXT),
-        "value":   _s("value",   styles, fontSize=9,  textColor=DARK_TEXT,  fontName="Helvetica-Bold"),
-        "normal":  _s("normal",  styles, fontSize=9,  textColor=DARK_TEXT),
-        "th":      _s("th",      styles, fontSize=8,  textColor=WHITE,      fontName="Helvetica-Bold"),
-        "th_r":    _s("th_r",    styles, fontSize=8,  textColor=WHITE,      fontName="Helvetica-Bold", alignment=TA_RIGHT),
-        "th_c":    _s("th_c",    styles, fontSize=8,  textColor=WHITE,      fontName="Helvetica-Bold", alignment=TA_CENTER),
-        "cell_c":  _s("cell_c",  styles, fontSize=9,  textColor=DARK_TEXT,  alignment=TA_CENTER),
-        "cell_r":  _s("cell_r",  styles, fontSize=9,  textColor=DARK_TEXT,  alignment=TA_RIGHT),
-        "footer":  _s("footer",  styles, fontSize=7,  textColor=GREY_TEXT,  alignment=TA_CENTER),
-        "thanks":  _s("thanks",  styles, fontSize=9,  textColor=GREY_TEXT,  alignment=TA_CENTER),
+        "brand":  _s("brand",  styles, fontSize=22, textColor=GREEN,      fontName=FONT_BOLD),
+        "tagline":_s("tagline",styles, fontSize=8,  textColor=GREY_TEXT,  fontName=FONT),
+        "invoice":_s("invoice",styles, fontSize=18, textColor=DARK_TEXT,  fontName=FONT_BOLD, alignment=TA_RIGHT),
+        "label":  _s("label",  styles, fontSize=8,  textColor=GREY_TEXT,  fontName=FONT),
+        "value":  _s("value",  styles, fontSize=9,  textColor=DARK_TEXT,  fontName=FONT_BOLD),
+        "normal": _s("normal", styles, fontSize=9,  textColor=DARK_TEXT,  fontName=FONT),
+        "th":     _s("th",     styles, fontSize=8,  textColor=WHITE,      fontName=FONT_BOLD),
+        "th_r":   _s("th_r",   styles, fontSize=8,  textColor=WHITE,      fontName=FONT_BOLD, alignment=TA_RIGHT),
+        "th_c":   _s("th_c",   styles, fontSize=8,  textColor=WHITE,      fontName=FONT_BOLD, alignment=TA_CENTER),
+        "cell_c": _s("cell_c", styles, fontSize=9,  textColor=DARK_TEXT,  fontName=FONT,      alignment=TA_CENTER),
+        "cell_r": _s("cell_r", styles, fontSize=9,  textColor=DARK_TEXT,  fontName=FONT,      alignment=TA_RIGHT),
+        "footer": _s("footer", styles, fontSize=7,  textColor=GREY_TEXT,  fontName=FONT,      alignment=TA_CENTER),
+        "thanks": _s("thanks", styles, fontSize=9,  textColor=GREY_TEXT,  fontName=FONT,      alignment=TA_CENTER),
     }
 
     story = []
 
     # ─────────────────────────────────────────────────────────────────────────
-    # 1. HEADER  (brand left | INVOICE right)
+    # 1. HEADER (brand left | INVOICE right)
     # ─────────────────────────────────────────────────────────────────────────
     hdr = Table(
         [[Paragraph(platform, S["brand"]), Paragraph("INVOICE", S["invoice"])]],
         colWidths=[W * 0.5, W * 0.5],
     )
     hdr.setStyle(TableStyle([
-        ("VALIGN",         (0, 0), (-1, -1), "MIDDLE"),
-        ("BOTTOMPADDING",  (0, 0), (-1, -1), 0),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
     ]))
     story.append(hdr)
     story.append(Paragraph("Online Learning Platform", S["tagline"]))
@@ -90,11 +115,13 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
     story.append(HRFlowable(width="100%", thickness=2, color=GREEN, spaceAfter=6 * mm))
 
     # ─────────────────────────────────────────────────────────────────────────
-    # 2. ORDER META  (left: order info | right: bill-to)
+    # 2. ORDER META (left: order info | right: bill-to)
     # ─────────────────────────────────────────────────────────────────────────
     def meta_block(rows):
-        data = [[Paragraph(lbl, S["label"]), Paragraph(str(val), S["value"])]
-                for lbl, val in rows]
+        data = [
+            [Paragraph(lbl, S["label"]), Paragraph(str(val), S["value"])]
+            for lbl, val in rows
+        ]
         t = Table(data, colWidths=[32 * mm, 55 * mm])
         t.setStyle(TableStyle([
             ("VALIGN",        (0, 0), (-1, -1), "TOP"),
@@ -107,7 +134,7 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
         ("Invoice No.",    f"#{order_data['order_id']}"),
         ("Date",           order_data["order_date"]),
         ("Payment Method", order_data["payment_method"]),
-        ("Status",         "Paid ✓"),
+        ("Status",         "Paid \u2713"),
     ])
     right_meta = meta_block([
         ("Bill To", order_data["student_name"]),
@@ -124,6 +151,10 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
     # ─────────────────────────────────────────────────────────────────────────
     col_w = [W * 0.55, W * 0.15, W * 0.15, W * 0.15]
 
+    # ₹ — U+20B9 Indian Rupee Sign (rendered correctly with DejaVu font)
+    def rupee(amount: float) -> str:
+        return f"\u20b9{amount:,.2f}"
+
     items_data = [
         # Header row
         [
@@ -134,10 +165,10 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
         ],
         # Single item row
         [
-            Paragraph(order_data["course_title"], S["normal"]),
-            Paragraph("1",                        S["cell_c"]),
-            Paragraph(f"\u20b9{order_data['course_price']:,.2f}", S["cell_r"]),
-            Paragraph(f"\u20b9{order_data['course_price']:,.2f}", S["cell_r"]),
+            Paragraph(order_data["course_title"],                    S["normal"]),
+            Paragraph("1",                                           S["cell_c"]),
+            Paragraph(rupee(order_data["course_price"]),             S["cell_r"]),
+            Paragraph(rupee(order_data["course_price"]),             S["cell_r"]),
         ],
     ]
 
@@ -156,7 +187,7 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
     story.append(Spacer(1, 4 * mm))
 
     # ─────────────────────────────────────────────────────────────────────────
-    # 4. TOTALS BLOCK  (right-aligned)
+    # 4. TOTALS BLOCK (right-aligned)
     # ─────────────────────────────────────────────────────────────────────────
     tw        = W * 0.45
     col_left  = tw * 0.55
@@ -164,8 +195,8 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
 
     def price_row(label, amount, red=False, highlight=False):
         txt_color = WHITE if highlight else (colors.HexColor("#E53935") if red else DARK_TEXT)
-        fn        = "Helvetica-Bold" if highlight else "Helvetica"
-        fs        = 10 if highlight else 9
+        fn = FONT_BOLD if highlight else FONT
+        fs = 10 if highlight else 9
         lp = _s(f"lbl_{label}", styles, fontSize=fs, textColor=txt_color, fontName=fn)
         rp = _s(f"amt_{label}", styles, fontSize=fs, textColor=txt_color, fontName=fn, alignment=TA_RIGHT)
         return [Paragraph(label, lp), Paragraph(amount, rp)]
@@ -173,27 +204,26 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
     totals_rows = []
     if order_data.get("is_discounted"):
         totals_rows.append(price_row(
-            "Original Price",
-            f"\u20b9{float(order_data['course_price']):,.2f}"
+            "Original Price", rupee(float(order_data["course_price"]))
         ))
         totals_rows.append(price_row(
-            "Discount",
-            f"-\u20b9{float(order_data['discount_amount']):,.2f}",
-            red=True
+            "Discount", f"-{rupee(float(order_data['discount_amount']))}", red=True
         ))
-    totals_rows.append(price_row("Subtotal",   f"\u20b9{float(order_data['base_price']):,.2f}"))
-    totals_rows.append(price_row("GST (18%)", f"\u20b9{float(order_data['tax_amount']):,.2f}"))
-    totals_rows.append(price_row("TOTAL PAID", f"\u20b9{float(order_data['total_amount']):,.2f}", highlight=True))
+    totals_rows.append(price_row("Subtotal",   rupee(float(order_data["base_price"]))))
+    totals_rows.append(price_row("GST (18%)",  rupee(float(order_data["tax_amount"]))))
+    totals_rows.append(price_row(
+        "TOTAL PAID", rupee(float(order_data["total_amount"])), highlight=True
+    ))
 
-    last_idx = len(totals_rows) - 1
+    last_idx   = len(totals_rows) - 1
     totals_tbl = Table(totals_rows, colWidths=[col_left, col_right])
     totals_tbl.setStyle(TableStyle([
-        ("TOPPADDING",    (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 10),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 10),
-        ("LINEABOVE",     (0, last_idx), (-1, last_idx), 1.5, GREEN),
-        ("BACKGROUND",    (0, last_idx), (-1, last_idx), GREEN),
+        ("TOPPADDING",    (0, 0),          (-1, -1),       4),
+        ("BOTTOMPADDING", (0, 0),          (-1, -1),       4),
+        ("LEFTPADDING",   (0, 0),          (-1, -1),       10),
+        ("RIGHTPADDING",  (0, 0),          (-1, -1),       10),
+        ("LINEABOVE",     (0, last_idx),   (-1, last_idx), 1.5, GREEN),
+        ("BACKGROUND",    (0, last_idx),   (-1, last_idx), GREEN),
     ]))
 
     # Push totals block to the right side
@@ -219,7 +249,7 @@ def generate_invoice_pdf(order_data: dict) -> bytes:
     ))
     story.append(Spacer(1, 2 * mm))
     story.append(Paragraph(
-        f"Questions? Reply to this email or visit our Help Center. — {platform}",
+        f"Questions? Reply to this email or visit our Help Center. \u2014 {platform}",
         S["footer"]
     ))
 

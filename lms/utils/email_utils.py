@@ -5,7 +5,8 @@ Send a purchase-confirmation email with the PDF invoice attached.
 
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
-from .invoice_generator import generate_invoice_pdf
+from lms.utils.invoice_generator import generate_invoice_pdf
+
 import os, base64
 
 
@@ -202,7 +203,8 @@ def send_purchase_confirmation_email(order_data: dict) -> None:
         f"— {platform} Team"
     )
 
-      # ── Generate PDF ───────────────────────────────────────────────────────────
+
+    # ── Generate PDF ───────────────────────────────────────────────────────────
     pdf_bytes = generate_invoice_pdf(order_data)
 
     subject    = f"[{platform}] Purchase Confirmed – #{order_data['order_id']}"
