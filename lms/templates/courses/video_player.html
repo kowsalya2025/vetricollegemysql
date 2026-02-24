@@ -791,32 +791,34 @@
         </div>
 
         <!-- SOFTWARE TOOLS SECTION - 3 PER ROW WITH IMAGES -->
-        {% if course.tools.exists or video.tools_needed.exists %}
+        {% if course.course_tools.exists %}
         <div class="tools-section">
             <h3>Required Software Tools</h3>
             <p class="subtitle">Make sure you have these tools installed before starting this course</p>
             
             <div class="tools-grid">
-                {% for tool in video.tools_needed.all|default:course.tools.all %}
+                {% for tool in course.course_tools.all %}
                 <div class="tool-item">
                     <!-- Required/Optional Badge -->
-                    <span class="tool-badge {% if tool.is_required %}required{% else %}optional{% endif %}">
+                    <!-- <span class="tool-badge {% if tool.is_required %}required{% else %}optional{% endif %}">
                         {% if tool.is_required %}Required{% else %}Optional{% endif %}
-                    </span>
+                    </span> -->
                     
                     <!-- Icon -->
                     <div class="tool-icon-wrapper">
-                        {% if tool.icon_image %}
-                            <img src="{{ tool.icon_image.url }}" alt="{{ tool.name }}">
-                        {% elif tool.icon_class %}
-                            <i class="{{ tool.icon_class }}"></i>
-                        {% else %}
-                            <i class="fas fa-tools"></i>
-                        {% endif %}
-                    </div>
+    {% if tool.icon_image %}
+        <img src="{{ tool.icon_image.url }}" alt="{{ tool.tool_name }}">
+    {% elif tool.icon_url %}
+        <img src="{{ tool.icon_url }}" alt="{{ tool.tool_name }}">
+    {% elif tool.icon_class %}
+        <i class="{{ tool.icon_class }}"></i>
+    {% else %}
+        <i class="fas fa-tools"></i>
+    {% endif %}
+</div>
                     
                     <!-- Tool Name -->
-                    <div class="tool-name">{{ tool.name }}</div>
+                    <div class="tool-name">{{ tool.tool_name }}</div>
                     
                     <!-- Tool Description -->
                     {% if tool.description %}
