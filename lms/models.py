@@ -501,6 +501,7 @@ class CourseTool(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='course_tools')
     tool_name = models.CharField(max_length=100)
     icon_url = models.URLField(blank=True)  # ← ADD THIS
+    is_required = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['id']

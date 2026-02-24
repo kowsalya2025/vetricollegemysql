@@ -211,27 +211,14 @@ class CourseReviewInline(admin.TabularInline):
 
 
 from django.contrib import admin
-from .models import Tool
+from .models import CourseTool
 
-@admin.register(Tool)
-class ToolAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'is_required', 'order', 'created_at']
-    list_filter = ['category', 'is_required']
-    search_fields = ['name', 'description']
-    list_editable = ['order', 'is_required']
-    
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('name', 'description', 'category', 'is_required', 'order')
-        }),
-        ('Icon', {
-            'fields': ('icon_class', 'icon_image'),
-            'description': 'Choose either Font Awesome class OR upload custom image'
-        }),
-        ('Links', {
-            'fields': ('download_url',)
-        }),
-    )
+@admin.register(CourseTool)
+class CourseToolAdmin(admin.ModelAdmin):
+    list_display = ['tool_name', 'course', 'is_required', 'icon_url']
+    list_filter = ['course', 'is_required']
+    search_fields = ['tool_name']
+    list_editable = ['is_required']
 
 # ============================
 # COURSE ADMIN
