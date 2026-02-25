@@ -1,5 +1,6 @@
 # lms/urls.py
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -78,4 +79,10 @@ path('payment-failed/', views.payment_failed, name='payment_failed'),
 path('test-payment/<slug:slug>/', views.create_test_payment, name='create_test_payment'),
 
 path('payment/success/<int:order_id>/', views.payment_success, name='payment_success'),
+
+path('password-reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+    path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('password-reset-confirm/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('password-reset-complete/', auth_views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
+
 ]
