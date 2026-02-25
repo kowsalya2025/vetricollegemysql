@@ -341,3 +341,22 @@ EMAIL_USE_TLS     = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER   = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@example.com')
+
+
+
+
+# Auto-fix site domain
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
+
+@receiver(post_migrate)
+def update_site_domain(sender, **kwargs):
+    if sender.name == 'django.contrib.sites':
+        from django.contrib.sites.models import Site
+        Site.objects.update_or_create(
+            id=1,
+            defaults={
+                'domain': 'vetricollegemysql-1.onrender.com',
+                'name': 'VTS LMS'
+            }
+        )
