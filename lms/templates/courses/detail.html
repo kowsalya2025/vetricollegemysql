@@ -672,6 +672,13 @@
     font-size: 20px;
 }
 
+.required-star {
+    color: #ef4444;
+    margin-left: 2px;
+    font-weight: 700;
+    font-size: 20px;
+}
+
 .course {
     color: #555;
     margin: 5px 0;
@@ -1236,7 +1243,7 @@
             <input type="hidden" name="action" value="submit_review">
 
             <div class="review-form-group">
-                <label for="review_name">Your Name *</label>
+                <label for="review_name">Your Name <span class="required-star">*</span></label>
                 <input type="text" 
                        id="review_name" 
                        name="name" 
@@ -1245,7 +1252,7 @@
             </div>
 
             <div class="review-form-group">
-                <label>Rating *</label>
+                <label>Rating <span class="required-star">*</span></label>
                 <div class="star-rating-input" id="starRatingInput">
                     <span class="star" data-rating="1">★</span>
                     <span class="star" data-rating="2">★</span>
@@ -1257,7 +1264,7 @@
             </div>
 
             <div class="review-form-group">
-                <label for="review_text">Your Review *</label>
+                <label for="review_text">Your Review <span class="required-star">*</span></label>
                 <textarea id="review_text" 
                           name="review" 
                           required

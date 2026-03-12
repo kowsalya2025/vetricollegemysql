@@ -122,32 +122,49 @@ def login_view(request):
     return render(request, 'lms/login.html')
 
 
+import re
+
 def signup_view(request):
     """User registration view"""
     if request.user.is_authenticated:
         return redirect('home')
     
     if request.method == 'POST':
-        name = request.POST.get('name', '').strip()
-        email = request.POST.get('email', '').strip()
-        password = request.POST.get('password', '')
+        name             = request.POST.get('name', '').strip()
+        email            = request.POST.get('email', '').strip()
+        password         = request.POST.get('password', '')
         confirm_password = request.POST.get('confirm_password', '')
         
         if not all([name, email, password, confirm_password]):
             messages.error(request, 'All fields are required!')
-            return redirect('signup')
-        
+            return render(request, 'lms/signup.html')
+
+        # ── EMAIL VALIDATION ──────────────────────────
+        email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_regex, email):
+            messages.error(request, 'Please enter a valid email address (e.g. name@gmail.com)')
+            return render(request, 'lms/signup.html')
+
+        domain = email.split('@')[1]
+        domain_parts = domain.split('.')
+        if len(domain_parts[-1]) < 2 or any(len(p) == 0 for p in domain_parts):
+            messages.error(request, 'Invalid email domain. Use a valid email like name@gmail.com')
+            return render(request, 'lms/signup.html')
+        # ─────────────────────────────────────────────
+
         if password != confirm_password:
             messages.error(request, 'Passwords do not match!')
-            return redirect('signup')
+            return render(request, 'lms/signup.html')
         
-        if len(password) < 6:
-            messages.error(request, 'Password must be at least 6 characters long!')
-            return redirect('signup')
-        
+        # ── CHANGED 6 → 8 ─────────────────────────────
+        if len(password) < 8:
+            messages.error(request, 'Password must be at least 8 characters long!')
+            return render(request, 'lms/signup.html')
+        # ─────────────────────────────────────────────
+
         if User.objects.filter(email=email).exists():
             messages.error(request, 'Email already registered!')
-            return redirect('signup')
+            return render(request, 'lms/signup.html')
         
         try:
             user = User.objects.create_user(
@@ -156,7 +173,6 @@ def signup_view(request):
                 password=password,
                 first_name=name
             )
-            # Authenticate and login the user
             auth_user = authenticate(request, username=email, password=password)
             if auth_user:
                 login(request, auth_user, backend='django.contrib.auth.backends.ModelBackend')
@@ -164,7 +180,7 @@ def signup_view(request):
                 return redirect('home')
         except Exception as e:
             messages.error(request, f'Error creating account: {str(e)}')
-            return redirect('signup')
+            return render(request, 'lms/signup.html')
     
     return render(request, 'lms/signup.html')
 

@@ -257,6 +257,7 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Skip email verification for social 
 SOCIALACCOUNT_EMAIL_REQUIRED = True  # Email is required
 SOCIALACCOUNT_QUERY_EMAIL = True  # Request email from social providers
 SOCIALACCOUNT_STORE_TOKENS = True  # Store OAuth tokens
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 # IMPORTANT: Tell allauth to skip the username
 SOCIALACCOUNT_FORMS = {
