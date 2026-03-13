@@ -34,10 +34,16 @@ class CustomSocialSignupForm(SocialSignupForm):
         return user
 
 
-        from django import forms
-from .models import ContactMessage
-
-class ContactForm(forms.ModelForm):
-    class Meta:
-        model = ContactMessage
-        fields = ['name', 'email', 'subject', 'message']
+class ContactForm(forms.Form):
+    name = forms.CharField(
+        widget=forms.TextInput(attrs={'placeholder': 'Enter your name'})
+    )
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={'placeholder': 'Enter your email'})
+    )
+    subject = forms.CharField(
+        widget=forms.TextInput(attrs={'placeholder': 'Enter subject'})
+    )
+    message = forms.CharField(
+        widget=forms.Textarea(attrs={'placeholder': 'Write your message here...'})
+    )
